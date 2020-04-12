@@ -36,7 +36,6 @@ def index():
 class RegisterForm(Form):
     name = StringField('Name', [validators.Length(min=1, max=50)])
     username = StringField('Username', [validators.Length(min=4, max=25)])
-    email = StringField('Email', [validators.Length(min=6, max=50)])
     password = PasswordField('Password', [
         validators.DataRequired(),
         validators.EqualTo('confirm', message='Passwords do not match')
@@ -56,9 +55,11 @@ def register():
        
        # Insert register into DB
         db.execute('INSERT INTO users(name, username, password) VALUES(:name, :username, :password)', {'name':name, 'username':username, 'password':password})
+        print("Insert into db complete")
 
         # Commit changes to database
         db.commit()
+        print("db commit complete")
         flash('You are now registered and can log in', 'success')
 
         return redirect(url_for('login'))
@@ -72,12 +73,12 @@ def login():
         password_candidate = request.form['password']
 
         # Get user by username
-        result = db.execute("SELECT * FROM users WHERE username = %s", [username])
-
-        if result > 0:
+        result = db.execute("SELECT * FROM users WHERE username LIKE :username", {"username": username}).fetchone()
+        print(result)
+        print(result[0])
+        if result[0] > 0:
             # Get stored hash
-            data = db.fetchone()
-            password = data['password']
+            password = result['password']
 
             # Compare Passwords
             if sha256_crypt.verify(password_candidate, password):
@@ -86,7 +87,7 @@ def login():
                 session['username'] = username
 
                 flash('You are now logged in', 'success')
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('search'))
             else:
                 error = 'Invalid login'
                 return render_template('login.html', error=error)
@@ -116,6 +117,35 @@ def logout():
     session.clear()
     flash('You are now logged out', 'success')
     return redirect(url_for('login'))
+
+@app.route('/search', methods=['GET', 'POST'])
+@is_logged_in
+def search():
+    username = session['username']
+    all_books = db.execute("SELECT * FROM books").fetchmany(6)[1:]
+    # search function for books
+    if request.method == "POST":
+        searchQuery = request.form.get("searchQuery")
+        # return value from the search
+        searchResult = db.execute("SELECT isbn, author, title FROM books WHERE isbn iLIKE '%"+searchQuery+"%' OR author iLIKE '%"+searchQuery+"%' OR title iLIKE '%"+searchQuery+"%'").fetchall()
+        # add search result to the list
+        session["books"] = []
+        # add the each result to the list
+        for i in searchResult:
+            session["books"].append(i)
+        if len(session["books"])==0:
+            return "No list!"
+        return render_template("search.html", books = session["books"], searchQuery = searchQuery, username=username)
+    return render_template("search.html", all_books=all_books, username=username )
+
+@app.route('/books', methods=['GET', 'POST'])
+@is_logged_in
+def books():
+    username = session['username']
+    all_books = db.execute("SELECT * FROM books LIMIT 51")
+    return render_template("books.html", all_books=all_books, username=username )
+
+
 
 if __name__ == "__main__":
     app.secret_key='secret123'
