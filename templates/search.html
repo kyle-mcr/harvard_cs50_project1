@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search</title>
     <style>
-    body {
-            background-image: url('static/books.jpg');
-    }
     form{
         margin-top:10%;
     }
@@ -19,6 +16,12 @@
         width:10%;
         margin-top:1%;
     }
+    .container{
+        margin-top:1%;
+    }
+    img{
+            width:10%;
+        }
     </style>
 </head>
 <body>  
@@ -39,10 +42,15 @@
  <div class="container">
      <ul class="list-group list-group-flush">
          {% for book in books %}
-                 <li class="list-group-item">
-                     <img src="http://covers.openlibrary.org/b/isbn/{{ book.isbn }}-S.jpg">
-                     <span class="ml-2"><a href="{{ url_for('book',isbn=book.isbn) }}"></a>{{ book.title }} by {{ book.author }}</span>
+                 <a href='/isbn/{{book.isbn}}'><li class="list-group-item">
+                     <img src="http://covers.openlibrary.org/b/isbn/{{ book.isbn }}-S.jpg" alt="no image">
+                     <span class="ml-2">
+                         <h5> Title: {{ book.title }}</h1>
+                         <h5> Author: {{ book.author }}</h1>
+                         <h5> ISBN: {{ book.isbn }}</h1>
+                        </span>
                  </li>
+                </a>
          {% endfor %}
      </ul>
  </div>

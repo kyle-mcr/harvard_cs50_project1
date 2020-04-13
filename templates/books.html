@@ -38,7 +38,7 @@
 <div class="card">
     {% for book in all_books %}
   <div class="item">
-    <a href="#" id="link" class="list-group-item list-group-item-action">
+    <a href='/isbn/{{book.isbn}}' id="link" class="list-group-item list-group-item-action">
         <h1 class="mb-2">{{ book.title }}</h5>
         <img
           class="m-2 shadow-sm"

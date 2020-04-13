@@ -1,4 +1,5 @@
 import os
+import json
 import requests
 import csv
 res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": "BWfT8CRtFGbWIZebNdceyQ", "isbns": "9781632168146"})
@@ -145,7 +146,49 @@ def books():
     all_books = db.execute("SELECT * FROM books LIMIT 51")
     return render_template("books.html", all_books=all_books, username=username )
 
+@app.route("/isbn/<string:isbn>",methods=["GET","POST"])
+@is_logged_in
+def bookpage(isbn):
+    warning=""
+    username=session.get('username') 
+    session["reviews"]=[]
+    secondreview=db.execute("SELECT * FROM reviews WHERE isbn = :isbn AND username= :username",{"username":username,"isbn":isbn}).fetchone()
+    if request.method=="POST" and secondreview==None:
+        review=request.form.get('textarea') 
+        rating=request.form.get('stars')
+        db.execute("INSERT INTO reviews (isbn, review, rating, username) VALUES (:a,:b,:c,:d)",{"a":isbn,"b":review,"c":rating,"d":username})
+        db.commit()
+    if request.method=="POST" and secondreview!=None:
+        warning="Sorry. You cannot add second review."
+    
+    res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": "Cdjuz7jTYIwy5Jj9GhY9sw", "isbns": isbn})
+    average_rating=res.json()['books'][0]['average_rating']
+    work_ratings_count=res.json()['books'][0]['work_ratings_count']
+    reviews=db.execute("SELECT * FROM reviews WHERE isbn = :isbn",{"isbn":isbn}).fetchall() 
+    for y in reviews:
+        session['reviews'].append(y)  
+    data=db.execute("SELECT * FROM books WHERE isbn = :isbn",{"isbn":isbn}).fetchone()
+    return render_template("book.html",data=data,reviews=session['reviews'],average_rating=average_rating,work_ratings_count=work_ratings_count,username=username,warning=warning)
 
+@app.route("/api/<string:isbn>")
+@is_logged_in
+def api(isbn):
+    data=db.execute("SELECT * FROM books WHERE isbn = :isbn",{"isbn":isbn}).fetchone()
+    if data==None:
+        return render_template('404.html')
+    res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": "Cdjuz7jTYIwy5Jj9GhY9sw", "isbns": isbn})
+    average_rating=res.json()['books'][0]['average_rating']
+    work_ratings_count=res.json()['books'][0]['work_ratings_count']
+    x = {
+    "title": data.title,
+    "author": data.author,
+    "year": data.year,
+    "isbn": isbn,
+    "review_count": work_ratings_count,
+    "average_score": average_rating
+    }
+    api=json.dumps(x)
+    return render_template("api.json",api=api)
 
 if __name__ == "__main__":
     app.secret_key='secret123'

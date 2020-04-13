@@ -1,41 +1,106 @@
+<style>
+    img {
+        width: 20%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 41%;
+    }
+
+    h2 {
+        font-size: 29pt;
+        font-family: sans-serif;
+        position: relative;
+        color: #444649;
+        text-align: center;
+    }
+    h3 {
+        font-size: 29pt;
+        font-family: sans-serif;
+        position: relative;
+        color: #797979;
+        text-align: center;
+        border-bottom: 1px solid grey;
+    }
+    .col{
+        border: 1px solid grey;
+    }
+    .myButton {
+	box-shadow:inset 0px 1px 3px 0px #91b8b3;
+	background:linear-gradient(to bottom, #768d87 5%, #6c7c7c 100%);
+	background-color:#768d87;
+	border-radius:5px;
+	border:1px solid #566963;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:15px;
+	font-weight:bold;
+	padding:11px 23px;
+	text-decoration:none;
+	text-shadow:0px -1px 0px #2b665e;
+    margin-top:1%;
+}
+.myButton:hover {
+	background:linear-gradient(to bottom, #6c7c7c 5%, #768d87 100%);
+	background-color:#6c7c7c;
+}
+.myButton:active {
+	position:relative;
+	top:1px;
+}
+
+</style>
 {% extends "layout.html" %}
 
 {% block body %}
-<div>
-    <h3>
-        Hello, {{ username }}!
-    </h3>
-    <h1>
-        {{ book_title }}
-    </h1>
-    <img src="http://covers.openlibrary.org/b/isbn/{{ isbn }}-M.jpg">
-    <h3>
-        Number of reviews {{ reviews_count }}
-    </h3>
-    <h3>
-        Number of ratings {{ ratings_count }}
-    </h3>
-    <h3>
-        Average Rating {{ average_rating }}
-    </h3>
+<br>
+<div class='container bg-light row no-gutters'>
+    <h2 class='container bg-dark text-white text-center my-2'>{{data.title}}</h1>
+        <div class='col'>
+            <img class="m-2 shadow-sm" width="99" src="http://covers.openlibrary.org/b/isbn/{{ data.isbn }}-M.jpg"
+                alt="hi" />
+            <h2>Author:</h2><h3>{{data.author}}</h3>
+            <h2>Year:</h2><h3>{{data.year}}</h3>
+            <h2>Isbn:</h2><h3> {{data.isbn}}</h3>
+        </div>
+        <div class='col text-center bg-info my-2'>
+            <h2>Goodread.com rating: </h2>
+            <h1>{{average_rating}}</h1>
+            <h5 class=''>Reviews received: </h5>
+            <h2>{{work_ratings_count}}</h2>
+        </div>
 </div>
-<form method="POST">
-    <input type="text" name="comment" class="commentBox" placeholder="Leave your comment">
-    <button type="submit" class="commentButton">submit</button>
-    <select name="rating">
-        <option>1</option>
-        <option>2</option>
-        <option>3</option>
-        <option>4</option>
-        <option>5</option>
-    </select>
-</form>
-<h2>Reviews</h2>
-<ul>
-    {% for review in reviews %}
-        <li>Review: {{ review.review }} Username: {{ review.username }} Date: {{ review.date }}</li>
-    {% else %}
-        <li>No reviews!</li>
-    {% endfor %}
-</ul>
+{% if reviews != None %}
+{% for x in reviews %}
+<div class='container bg-light my-3 '>
+    <h6>Rating: {{x.rating}} of 5</h6>
+    <blockquote class="blockquote">
+        <p>{{x.review}}</p>
+        <footer class="blockquote-footer">{{x.username}}</footer>
+    </blockquote>
+</div>
+{% endfor %}
+{% endif %}
+<div class='text-center text-danger'>{{warning}}</div>
+<div class='container bg-light my-2'>
+    <form class='form-group ' action="{{url_for('bookpage',isbn=data.isbn)}}" method="POST">
+        <label class='text-danger'>Write your review...</label>
+        <select name="stars" class='m-1' required>
+            <option selected value disabled> -- select rating -- </option>
+            <option value="1">1 star</option>
+            <option value="2">2 stars</option>
+            <option value="3">3 stars</option>
+            <option value="4">4 stars</option>
+            <option value="5">5 stars</option>
+        </select>
+        <textarea class='form-control' name='textarea'>
+        </textarea>
+        <input class='myButton' type='submit' value='Send review'>
+    </form>
+</div>
+<div class='bg-light text-center '><a href='/api/{{data.isbn}}'>API</a></div>
+
 {% endblock %}
+© 2020 GitHub, Inc.
